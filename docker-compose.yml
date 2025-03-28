@@ -1,0 +1,88 @@
+services:
+    php:
+        build: ./php/${PHP_VERSION}
+        volumes:
+            - ${SITE_PATH}:/var/www/bitrix
+            - ./logs/php:/var/log/php
+        environment:
+            TZ: Europe/Moscow
+        networks:
+            - bitrixdock
+        restart: unless-stopped
+
+    web_server:
+        build: ./${WEB_SERVER_TYPE}
+        volumes:
+            - ${SITE_PATH}:/var/www/bitrix
+            - ./logs/${WEB_SERVER_TYPE}:/var/log/${WEB_SERVER_TYPE}
+        ports:
+            - '80:80'
+            - '443:443'
+        networks:
+            - bitrixdock
+        environment:
+            TZ: Europe/Moscow
+        restart: unless-stopped
+
+    db:
+        build: ./${DB_SERVER_TYPE}
+        volumes:
+            - ./logs/db:/var/log/mysql
+            - ./${DB_SERVER_TYPE}/data:/var/lib/mysql
+        ports:
+            - '3306:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            TZ: Europe/Moscow
+        networks:
+            - bitrixdock
+        restart: unless-stopped
+
+    memcached:
+        image: memcached:latest
+        networks:
+            - bitrixdock
+        volumes:
+            - ./logs/memcached:/var/log/memcached
+        environment:
+            TZ: Europe/Moscow
+        restart: unless-stopped
+
+    phpmyadmin:
+        image: phpmyadmin/phpmyadmin
+        ports:
+            - '9090:80'
+        environment:
+            PMA_HOST: db
+            PMA_PORT: 3306
+            TZ: Europe/Moscow
+        platform: linux/amd64
+        restart: unless-stopped
+        networks:
+            - bitrixdock
+        
+    redis:
+        image: redis:latest
+        volumes:
+            - ./logs/redis:/var/log/redis
+        networks:
+            - bitrixdock
+
+    
+    # ldap:
+    #     image: osixia/openldap:latest
+    #     environment:
+    #         LDAP_ORGANISATION: "Example Corp"
+    #         LDAP_DOMAIN: "example.com"
+    #         LDAP_ADMIN_PASSWORD: "admin"
+    #         LDAP_BASE_DN: "dc=example,dc=com"
+    #     ports:
+    #         - '389:389'
+    #         - '636:636'
+    #     networks:
+    #         - bitrixdock
+    #     restart: unless-stopped
+
+networks:
+    bitrixdock:
+        driver: bridge

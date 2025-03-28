@@ -1,0 +1,9 @@
+.idea
+.vscode
+.fleet
+logs
+.env
+/www*
+/mariadb/data
+/mysql/data
+.DS_Store
